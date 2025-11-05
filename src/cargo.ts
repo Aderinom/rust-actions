@@ -171,7 +171,7 @@ export class Cargo {
       // On Windows, we have to use powershell because otherwise env vars are not recignized by cargo
       await spawnAsync('cargo', args, {
         ...options,
-        shell: 'powershell.exe',
+        shell: 'bash',
         stdio: 'inherit',
         env: process.env as any,
       });

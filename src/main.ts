@@ -1,16 +1,11 @@
-import { spawnAsync } from './util';
+import { info } from '@actions/core';
+import { loadInput } from './input';
+import { run } from './lib';
 
 main();
 
 async function main(): Promise<void> {
-  // List env
-  await spawnAsync('Get-ChildItem', ['env:'], {
-    shell: 'powershell.exe',
-    stdio: 'inherit',
-    env: process.env as any,
-  });
-
-  // const cfg = loadInput();
-  // info('Using configuration:' + JSON.stringify(cfg, null, 0));
-  // run(cfg);
+  const cfg = loadInput();
+  info('Using configuration:' + JSON.stringify(cfg, null, 0));
+  run(cfg);
 }
