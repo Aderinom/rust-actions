@@ -7,83 +7,57 @@ on:
 
 jobs:
   # Run node tests
-  # test-node:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     # Setup
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #     - uses: actions/setup-node@v6
-  #       with:
-  #         node-version: '24' # Need 24 for testing
-  #         package-manager-cache: false
+  test-node:
+    runs-on: ubuntu-latest
+    steps:
+      # Setup
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24' # Need 24 for testing
+          package-manager-cache: false
 
-  #     - name: Install dependencies
-  #       run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-  #     - name: Build
-  #       run: pnpm build
+      - name: Build
+        run: pnpm build
 
-  #     - name: Build should be up to date
-  #       run: |
-  #         git diff --exit-code || (echo "There were changes in the build output - please commit build" && exit 1)
+      - name: Build should be up to date
+        run: |
+          git diff --exit-code || (echo "There were changes in the build output - please commit build" && exit 1)
 
-  #     - name: Install cargo-binstall
-  #       uses: cargo-bins/cargo-binstall@v1.15.7
-  #     - name: Run Tests
-  #       run: pnpm test
+      - name: Install cargo-binstall
+        uses: cargo-bins/cargo-binstall@v1.15.7
+      - name: Run Tests
+        run: pnpm test
 
-  #     - name: Check Format
-  #       run: pnpm prettier -c .
+      - name: Check Format
+        run: pnpm prettier -c .
 
-  # Run the action on itself on multiple OSes
-  # run-self:
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       os: [windows-latest]
-  #   runs-on: ${{ matrix.os }}
-  #   env:
-  #     SCCACHE_GHA_ENABLED: 'true'
-  #     RUSTC_WRAPPER: 'sccache'
-  #   steps: # Setup
-  #     - uses: actions/checkout@v4
-  #     - uses: pnpm/action-setup@v4
-  #     - uses: actions/setup-node@v6
-  #       with:
-  #         node-version: '20'
-  #         package-manager-cache: false
-  #     # C drive on windows is extremely slow
-  #     - name: Windows dev drive
-  #       uses: samypr100/setup-dev-drive@v3
-  #       if: runner.os == 'Windows'
-  #       with:
-  #         drive-path: C:\\dev.vhdx
-  #         drive-size: 10GB
-  #         drive-format: NTFS
-  #         trusted-dev-drive: true
-  #         mount-if-exists: true
-  #         env-mapping: |-
-  #           CARGO_HOME,{{ DEV_DRIVE }}/.cargo
-  #           RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
-  #           CARGO_TARGET_DIR,{{ DEV_DRIVE }}/target
-
-  #     - name: Run sccache-cache
-  #       uses: mozilla-actions/sccache-action@v0.0.9
-  #     - name: Run Self as Action
-  #       uses: ./ # Uses the action in the current repo
-  #       with:
-  #         project: './__tests__/test-cargo-repo'
-  #         run: 'test,clippy,fmt,doc,shear,deny'
-  #         flow-fmt-toolchain: 'nightly'
-
-  run-self-gha-cache:
+  run-self:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps: # Setup
+      # C drive on windows is extremely slow
+      - name: Windows dev drive
+        uses: samypr100/setup-dev-drive@v3
+        if: runner.os == 'Windows'
+        with:
+          drive-path: C:\\dev.vhdx
+          drive-size: 10GB
+          drive-format: NTFS
+          trusted-dev-drive: true
+          mount-if-exists: true
+          env-mapping: |-
+            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+            CARGO_TARGET_DIR,{{ DEV_DRIVE }}/target
+
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6

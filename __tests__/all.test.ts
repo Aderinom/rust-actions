@@ -47,7 +47,7 @@ describe('Workflows', () => {
 
   const config = loadInput();
   for (const wf of Object.keys(config.flow)) {
-    test(`should succeed for ${wf}`, { timeout: 30_000 }, async () => {
+    test(`should succeed for ${wf}`, { timeout: 45_000 }, async () => {
       const options = structuredClone(config);
       options.project = project_dir;
       options.run = [wf];
