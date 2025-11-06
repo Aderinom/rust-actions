@@ -31,7 +31,7 @@ jobs:
 
 To enable artifact caching use
 
-``` yaml
+```yaml
 jobs:
   rust-all:
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
         with:
           buildCacheStrategy: 'github'
           # If no cache is avaiable, tries to fall back to a cahe of this branch
-          buildCacheFallbackBranch: 'main' 
+          buildCacheFallbackBranch: 'main'
 ```
 
 Or with sccache:
