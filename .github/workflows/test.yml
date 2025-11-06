@@ -37,11 +37,51 @@ jobs:
   #       run: pnpm prettier -c .
 
   # Run the action on itself on multiple OSes
-  run-self:
+  # run-self:
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os: [windows-latest]
+  #   runs-on: ${{ matrix.os }}
+  #   env:
+  #     SCCACHE_GHA_ENABLED: 'true'
+  #     RUSTC_WRAPPER: 'sccache'
+  #   steps: # Setup
+  #     - uses: actions/checkout@v4
+  #     - uses: pnpm/action-setup@v4
+  #     - uses: actions/setup-node@v6
+  #       with:
+  #         node-version: '20'
+  #         package-manager-cache: false
+  #     # C drive on windows is extremely slow
+  #     - name: Windows dev drive
+  #       uses: samypr100/setup-dev-drive@v3
+  #       if: runner.os == 'Windows'
+  #       with:
+  #         drive-path: C:\\dev.vhdx
+  #         drive-size: 10GB
+  #         drive-format: NTFS
+  #         trusted-dev-drive: true
+  #         mount-if-exists: true
+  #         env-mapping: |-
+  #           CARGO_HOME,{{ DEV_DRIVE }}/.cargo
+  #           RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
+  #           CARGO_TARGET_DIR,{{ DEV_DRIVE }}/target
+
+  #     - name: Run sccache-cache
+  #       uses: mozilla-actions/sccache-action@v0.0.9
+  #     - name: Run Self as Action
+  #       uses: ./ # Uses the action in the current repo
+  #       with:
+  #         project: './__tests__/test-cargo-repo'
+  #         run: 'test,clippy,fmt,doc,shear,deny'
+  #         flow-fmt-toolchain: 'nightly'
+
+  run-self-gha-cache:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     env:
       SCCACHE_GHA_ENABLED: 'true'
@@ -53,26 +93,12 @@ jobs:
         with:
           node-version: '20'
           package-manager-cache: false
-      # C drive on windows is extremely slow
-      - name: Windows dev drive
-        uses: samypr100/setup-dev-drive@v3
-        if: runner.os == 'Windows'
-        with:
-          drive-path: C:\\dev.vhdx
-          drive-size: 10GB
-          drive-format: NTFS
-          trusted-dev-drive: true
-          mount-if-exists: true
-          env-mapping: |-
-            CARGO_HOME,{{ DEV_DRIVE }}/.cargo
-            RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
-            CARGO_TARGET_DIR,{{ DEV_DRIVE }}/target
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
       - name: Run Self as Action
         uses: ./ # Uses the action in the current repo
         with:
           project: './__tests__/test-cargo-repo'
           run: 'test,clippy,fmt,doc,shear,deny'
           flow-fmt-toolchain: 'nightly'
+          buildCacheStrategy: 'github'
+          buildCacheFallbackBranch: 'main'
