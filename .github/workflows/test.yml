@@ -83,9 +83,6 @@ jobs:
       matrix:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      SCCACHE_GHA_ENABLED: 'true'
-      RUSTC_WRAPPER: 'sccache'
     steps: # Setup
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
