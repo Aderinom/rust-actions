@@ -2,7 +2,8 @@ import { which } from '@actions/io';
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 import { Input, loadInput } from '../src/input.js';
-import { addCargoToPath, run, workflowConfig } from '../src/lib.js';
+import { addCargoToPath, run } from '../src/lib.js';
+import { workflowConfig } from '../src/workflows.js';
 
 addCargoToPath();
 

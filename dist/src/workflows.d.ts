@@ -1,8 +1,9 @@
-import { FlowConfig } from './lib';
-interface Workflow {
+import { Input } from './input';
+export interface Workflow {
     readonly name: string;
     readonly run: () => Promise<void>;
     readonly requiredTools: [string, string][];
+    readonly config: FlowConfig<any>;
 }
 export declare class TestWorkflow implements Workflow {
     readonly config: FlowConfig<'test'>;
@@ -46,4 +47,11 @@ export declare class DenyWorkflow implements Workflow {
     constructor(config: FlowConfig<'deny'>);
     run(): Promise<void>;
 }
-export {};
+export type FlowConfig<T extends keyof Input['flow']> = Omit<Input['flow'][T], 'overrideArgs'> & {
+    project: string;
+    cacheKey: string;
+    buildProfile?: string;
+    toolchain?: string;
+    overrideArgs?: string[];
+};
+export declare function workflowConfig<T extends keyof Input['flow']>(cfg: Input, flow: T): FlowConfig<T>;

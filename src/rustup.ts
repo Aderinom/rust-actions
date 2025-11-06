@@ -56,9 +56,11 @@ export async function installComponent(
 }
 
 // Gets the default Rust toolchain or undefined if not set (or command fails)
-export async function getDefaultToolchain(): Promise<string | undefined> {
+export async function getGlobalDefaultToolchain(): Promise<string | undefined> {
   try {
-    const stdoutBuf = execSync('rustup show active-toolchain').toString();
+    const stdoutBuf = execSync('rustup show active-toolchain', {
+      cwd: '/',
+    }).toString();
     return stdoutBuf.trim();
   } catch (err) {
     return undefined;

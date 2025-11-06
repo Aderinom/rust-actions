@@ -1,13 +1,15 @@
 import { info } from 'node:console';
+import parseArgsStringToArgv from 'string-argv';
 import { Cargo } from './cargo';
-import { FlowConfig } from './lib';
+import { Input } from './input';
 
 // Definition of a workflow
-interface Workflow {
+export interface Workflow {
   readonly name: string;
   readonly run: () => Promise<void>;
   // List of required tools as [tool, version] tuples to ensure before running
   readonly requiredTools: [string, string][];
+  readonly config: FlowConfig<any>;
 }
 
 export class TestWorkflow implements Workflow {
@@ -148,4 +150,44 @@ function cargoCommand(
   }
 
   return cargoCommand;
+}
+
+export type FlowConfig<T extends keyof Input['flow']> = Omit<
+  Input['flow'][T],
+  'overrideArgs'
+> & {
+  project: string;
+  cacheKey: string;
+  buildProfile?: string;
+  toolchain?: string;
+  overrideArgs?: string[];
+};
+// Helper to build workflow config by merging base config with specific flow config
+export function workflowConfig<T extends keyof Input['flow']>(
+  cfg: Input,
+  flow: T,
+): FlowConfig<T> {
+  let cacheKey: String | undefined = undefined;
+
+  // Set to default cache key unless 'no-cache' is specified
+  if (cfg.cacheKey !== 'no-cache') {
+    cacheKey = cfg.cacheKey;
+  }
+
+  const flowConfig = structuredClone(cfg.flow[flow]) as any;
+  const overrideArgs =
+    typeof flowConfig.overrideArgs === 'string'
+      ? parseArgsStringToArgv(flowConfig.overrideArgs)
+      : undefined;
+
+  const finalConfig = {
+    ...flowConfig,
+    project: cfg.project,
+    toolchain: flowConfig.toolchain ?? cfg.toolchain, // Flow-specific toolchain overrides global
+    buildProfile: cfg.profile,
+    cacheKey,
+    overrideArgs,
+  };
+
+  return finalConfig;
 }

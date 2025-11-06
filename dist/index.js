@@ -44280,6 +44280,7 @@ exports.restoreBuildCache = restoreBuildCache;
 exports.saveBuildCache = saveBuildCache;
 exports.buildCacheStrategy = buildCacheStrategy;
 const core_1 = __nccwpck_require__(59999);
+const crypto_1 = __nccwpck_require__(76982);
 const fs_1 = __nccwpck_require__(79896);
 const cache_1 = __nccwpck_require__(26619);
 const cargo_1 = __nccwpck_require__(21253);
@@ -44292,34 +44293,52 @@ const cargo_1 = __nccwpck_require__(21253);
 // - We have one cache entry per updated lock file
 // Disadvantages:
 // - Every branch will have to rebuild changes to internal dependencies
-// Format: {prefix}-build-{platform-arch}-{hash(cargo.lock) or branch-name}
-function buildCacheKey(projectDir, fallbackBranch) {
+function buildCacheKey(projectDir, toolchains, fallbackBranch) {
     const lockFile = cargo_1.Cargo.cargoLock(projectDir);
     let lockHashOrBranch = process.env.GITHUB_REF_NAME || 'not-in-gh-action'; //branch
     if (fallbackBranch == lockHashOrBranch) {
         // This branch is the fallback branch, we don't use the lock file hash
     }
     else if ((0, fs_1.existsSync)(lockFile)) {
-        const lockContent = (__nccwpck_require__(79896).readFileSync)(lockFile, 'utf8');
-        const crypto = __nccwpck_require__(76982);
-        const hash = crypto.createHash('sha256').update(lockContent).digest('hex');
+        const lockContent = (0, fs_1.readFileSync)(lockFile, 'utf8');
+        const hash = (0, crypto_1.createHash)('sha256').update(lockContent).digest('hex');
         lockHashOrBranch = hash.slice(0, 20); // use first 20 chars of hash
     }
+    const toolchainHash = (0, crypto_1.createHash)('sha256')
+        .update(toolchains.sort().join(','))
+        .digest('hex')
+        .slice(0, 8);
+    // Normalize project dir to be cache key friendly (e.g. ./my-project -> my-project, /my-project -> my-project, my-project/ -> my-project)
+    let normalizedProjectDir = projectDir.trim();
+    // Remove leading ./ or / (including repeated ones) and trailing slashes/backslashes
+    normalizedProjectDir = normalizedProjectDir
+        .replace(/^[./\\]+/, '')
+        .replace(/[./\\]+$/, '')
+        .replace(/^[/\\]+/, '');
+    // If empty (e.g. '.' or './'), fallback to current directory name
+    if (!normalizedProjectDir) {
+        normalizedProjectDir = 'root';
+    }
+    // Replace remaining path separators with dashes to avoid nested path issues
+    normalizedProjectDir = normalizedProjectDir.replace(/[\\/]+/g, '-');
     const platform = process.platform;
     const arch = process.arch;
-    return `rax-cache-build-${platform}-${arch}-${lockHashOrBranch}`;
+    return `rax-cache-build-${platform}-${arch}-${toolchainHash}-${normalizedProjectDir}-${lockHashOrBranch}`;
 }
-// Format: {prefix}-build-{platform-arch}-{fallback-branch}
-function buildFallbackCacheKey(fallbackBranch) {
+function buildFallbackCacheKey(projectDir, toolchains, fallbackBranch) {
     const platform = process.platform;
     const arch = process.arch;
-    return `rax-cache-build-${platform}-${arch}-${fallbackBranch}`;
+    const toolchainHash = (0, crypto_1.createHash)('sha256')
+        .update(toolchains.sort().join(','))
+        .digest('hex')
+        .slice(0, 8);
+    return `rax-cache-build-${platform}-${arch}-${toolchainHash}-${projectDir}-${fallbackBranch}`;
 }
 // Restores target folders from cache
-async function restoreBuildCache(projectDir, fallbackBranch) {
+async function restoreBuildCache(projectDir, toolchains, fallbackBranch) {
     const targetDir = cargo_1.Cargo.targetDir(projectDir);
-    const cacheKey = buildCacheKey(projectDir, fallbackBranch);
-    const fallbackKey = buildFallbackCacheKey(fallbackBranch);
+    const cacheKey = buildCacheKey(projectDir, toolchains, fallbackBranch);
+    const fallbackKey = buildFallbackCacheKey(projectDir, toolchains, fallbackBranch);
     const restoredKey = await (0, cache_1.restoreFromCache)([targetDir], cacheKey, [
         fallbackKey,
     ]);
@@ -44330,9 +44349,9 @@ async function restoreBuildCache(projectDir, fallbackBranch) {
         console.info(`No build cache found for keys: ${cacheKey}, ${fallbackKey}`);
     }
 }
-async function saveBuildCache(projectDir, fallbackBranch) {
+async function saveBuildCache(projectDir, toolchains, fallbackBranch) {
     const targetDir = cargo_1.Cargo.targetDir(projectDir);
-    const cacheKey = buildCacheKey(projectDir, fallbackBranch);
+    const cacheKey = buildCacheKey(projectDir, toolchains, fallbackBranch);
     // TODO: Need to prune the target folder to reduce size
     if (!(0, fs_1.existsSync)(targetDir)) {
         (0, core_1.warning)(`Target directory does not exist: ${targetDir}, skipping cache save.`);
@@ -44341,15 +44360,15 @@ async function saveBuildCache(projectDir, fallbackBranch) {
     await (0, cache_1.saveToCache)([targetDir], cacheKey);
     (0, core_1.info)(`Saved build cache with key: ${cacheKey}`);
 }
-function buildCacheStrategy(projectDir, strategy, fallbackBranch) {
+function buildCacheStrategy(projectDir, strategy, toolchains, fallbackBranch) {
     switch (strategy) {
         case 'github':
             return {
                 restore: async () => {
-                    await restoreBuildCache(projectDir, fallbackBranch);
+                    await restoreBuildCache(projectDir, toolchains, fallbackBranch);
                 },
                 save: async () => {
-                    await saveBuildCache(projectDir, fallbackBranch);
+                    await saveBuildCache(projectDir, toolchains, fallbackBranch);
                 },
             };
         default:
@@ -44881,7 +44900,6 @@ function loadInput() {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.run = run;
-exports.workflowConfig = workflowConfig;
 exports.addCargoToPath = addCargoToPath;
 exports.timeSinceStart = timeSinceStart;
 const tslib_1 = __nccwpck_require__(31577);
@@ -44890,7 +44908,6 @@ const exec_1 = __nccwpck_require__(58872);
 const node_console_1 = __nccwpck_require__(37540);
 const node_os_1 = __nccwpck_require__(48161);
 const node_path_1 = tslib_1.__importDefault(__nccwpck_require__(76760));
-const string_argv_1 = tslib_1.__importDefault(__nccwpck_require__(30761));
 const build_cache_js_1 = __nccwpck_require__(84954);
 const cargo_js_1 = __nccwpck_require__(21253);
 const rustup_js_1 = __nccwpck_require__(61154);
@@ -44909,6 +44926,7 @@ async function run(cfg) {
     (0, core_1.info)(`target dir: ${cargo_js_1.Cargo.targetDir(cfg.project)}`);
     // print rustup show
     await (0, exec_1.exec)('rustup', ['show']);
+    // Check for rust-toolchain.toml and override toolchain if necessary
     const tomlChannel = await cargo_js_1.Cargo.rustToolchainTomlChannel(cfg.project);
     if (tomlChannel) {
         (0, core_1.info)(`Detected rust-toolchain.toml channel: ${tomlChannel}`);
@@ -44917,68 +44935,22 @@ async function run(cfg) {
         }
         cfg.toolchain = tomlChannel;
     }
-    const buildCache = (0, build_cache_js_1.buildCacheStrategy)(cfg.project, cfg.buildCacheStrategy, cfg.buildCacheFallbackBranch);
     const cacheKey = cfg.cacheKey === 'no-cache' ? undefined : 'rax-cache';
-    // Set default toolchain to stable to allow rustc -vV calls
-    if ((await (0, rustup_js_1.getDefaultToolchain)()) === undefined) {
-        // Doesn't matter since toolchain cache on windows is as fast as fresh install
-        // notice(
-        //   'No default toolchain set, since we require a toolchain to get the host triple, it is set to a used toolchain',
-        // );
-        // notice(
-        //   'This means the used toolchain can not be cached properly. To fix this, set a default toolchain in your environment or rustup.',
-        // );
+    // Ensure default toolchain is set to allow rustc -vV calls
+    if ((await (0, rustup_js_1.getGlobalDefaultToolchain)()) === undefined) {
         await (0, rustup_js_1.setDefaultToolchain)(cfg.toolchain || 'stable');
     }
     const enabledWorkflows = [
-        new workflows_js_1.FormatWorkflow(workflowConfig(cfg, 'fmt')),
-        new workflows_js_1.ClippyWorkflow(workflowConfig(cfg, 'clippy')),
-        new workflows_js_1.ShearWorkflow(workflowConfig(cfg, 'shear')),
-        new workflows_js_1.TestWorkflow(workflowConfig(cfg, 'test')),
-        new workflows_js_1.DocsWorkflow(workflowConfig(cfg, 'doc')),
-        new workflows_js_1.DenyWorkflow(workflowConfig(cfg, 'deny')),
+        new workflows_js_1.FormatWorkflow((0, workflows_js_1.workflowConfig)(cfg, 'fmt')),
+        new workflows_js_1.ClippyWorkflow((0, workflows_js_1.workflowConfig)(cfg, 'clippy')),
+        new workflows_js_1.ShearWorkflow((0, workflows_js_1.workflowConfig)(cfg, 'shear')),
+        new workflows_js_1.TestWorkflow((0, workflows_js_1.workflowConfig)(cfg, 'test')),
+        new workflows_js_1.DocsWorkflow((0, workflows_js_1.workflowConfig)(cfg, 'doc')),
+        new workflows_js_1.DenyWorkflow((0, workflows_js_1.workflowConfig)(cfg, 'deny')),
     ].filter((wf) => workflowFilter(cfg, wf.name));
     // Prepare toolchains
-    const toolchainsToInstall = new Set();
-    if (cfg.toolchain) {
-        toolchainsToInstall.add(cfg.toolchain);
-    }
-    let needDefaultToolchain = false;
-    for (const flow of enabledWorkflows) {
-        if (flow.config.toolchain) {
-            toolchainsToInstall.add(flow.config.toolchain);
-        }
-        else {
-            needDefaultToolchain = true;
-        }
-    }
-    if (needDefaultToolchain && cfg.toolchain) {
-        toolchainsToInstall.add(cfg.toolchain);
-    }
-    const installedToolchains = [];
-    // Prepare all required toolchains
-    for (const tc of toolchainsToInstall) {
-        await (0, rustup_js_1.prepareToolchain)(start, tc, cfg.extraComponents, cacheKey);
-        installedToolchains.push(tc);
-    }
-    const installedTools = [];
-    // Installation of required tools for enabled workflows
-    await (0, core_1.group)(`Installing tools: ${timeSinceStart(start)}`, async () => {
-        for (const wf of enabledWorkflows) {
-            for (const [tool, version] of wf.requiredTools) {
-                await cargo_js_1.Cargo.install(tool, version, cacheKey);
-                installedTools.push([tool, version]);
-            }
-        }
-        if (cfg.installAdditional) {
-            for (const toolSpec of cfg.installAdditional) {
-                // Split toolSpec into tool and version (default to 'latest' if no version specified)
-                const [tool, version] = toolSpec.split('@');
-                await cargo_js_1.Cargo.install(tool, version || 'latest', cacheKey);
-                installedTools.push([tool, version || 'latest']);
-            }
-        }
-    });
+    const installedToolchains = await installToolchains(cfg, enabledWorkflows, start, cacheKey);
+    const installedTools = await installTools(start, enabledWorkflows, cacheKey, cfg);
     // If installOnly is set, skip workflow execution
     if (cfg.installOnly) {
         (0, core_1.info)('Install-only mode enabled, skipping workflow execution.');
@@ -44989,13 +44961,14 @@ async function run(cfg) {
             succeeded: true,
         };
     }
+    const buildCache = (0, build_cache_js_1.buildCacheStrategy)(cfg.project, cfg.buildCacheStrategy, installedToolchains, cfg.buildCacheFallbackBranch);
     if (buildCache) {
         await (0, core_1.group)(`Restoring build cache: ${timeSinceStart(start)}`, async () => {
             await buildCache.restore();
         });
     }
-    const workflowResults = {};
     // Run workflows
+    const workflowResults = {};
     let failingWorkflows = [];
     let allSucceeded = true;
     for (const wf of enabledWorkflows) {
@@ -45031,26 +45004,51 @@ async function run(cfg) {
         succeeded: allSucceeded,
     };
 }
-// Helper to build workflow config by merging base config with specific flow config
-function workflowConfig(cfg, flow) {
-    let cacheKey = undefined;
-    // Set to default cache key unless 'no-cache' is specified
-    if (cfg.cacheKey !== 'no-cache') {
-        cacheKey = cfg.cacheKey;
+async function installTools(start, enabledWorkflows, cacheKey, cfg) {
+    const installedTools = [];
+    // Installation of required tools for enabled workflows
+    await (0, core_1.group)(`Installing tools: ${timeSinceStart(start)}`, async () => {
+        for (const wf of enabledWorkflows) {
+            for (const [tool, version] of wf.requiredTools) {
+                await cargo_js_1.Cargo.install(tool, version, cacheKey);
+                installedTools.push([tool, version]);
+            }
+        }
+        if (cfg.installAdditional) {
+            for (const toolSpec of cfg.installAdditional) {
+                // Split toolSpec into tool and version (default to 'latest' if no version specified)
+                const [tool, version] = toolSpec.split('@');
+                await cargo_js_1.Cargo.install(tool, version || 'latest', cacheKey);
+                installedTools.push([tool, version || 'latest']);
+            }
+        }
+    });
+    return installedTools;
+}
+async function installToolchains(cfg, enabledWorkflows, start, cacheKey) {
+    const toolchainsToInstall = new Set();
+    if (cfg.toolchain) {
+        toolchainsToInstall.add(cfg.toolchain);
     }
-    const flowConfig = structuredClone(cfg.flow[flow]);
-    const overrideArgs = typeof flowConfig.overrideArgs === 'string'
-        ? (0, string_argv_1.default)(flowConfig.overrideArgs)
-        : undefined;
-    const finalConfig = {
-        ...flowConfig,
-        project: cfg.project,
-        toolchain: flowConfig.toolchain ?? cfg.toolchain, // Flow-specific toolchain overrides global
-        buildProfile: cfg.profile,
-        cacheKey,
-        overrideArgs,
-    };
-    return finalConfig;
+    let needDefaultToolchain = false;
+    for (const flow of enabledWorkflows) {
+        if (flow.config.toolchain) {
+            toolchainsToInstall.add(flow.config.toolchain);
+        }
+        else {
+            needDefaultToolchain = true;
+        }
+    }
+    if (needDefaultToolchain && cfg.toolchain) {
+        toolchainsToInstall.add(cfg.toolchain);
+    }
+    const installedToolchains = [];
+    // Prepare all required toolchains
+    for (const tc of toolchainsToInstall) {
+        await (0, rustup_js_1.prepareToolchain)(start, tc, cfg.extraComponents, cacheKey);
+        installedToolchains.push(tc);
+    }
+    return installedToolchains;
 }
 // Ensures that Cargo's bin directory is in PATH
 function addCargoToPath() {
@@ -45104,7 +45102,7 @@ exports.listToolchains = listToolchains;
 exports.listInstalledComponents = listInstalledComponents;
 exports.isComponentInstalled = isComponentInstalled;
 exports.installComponent = installComponent;
-exports.getDefaultToolchain = getDefaultToolchain;
+exports.getGlobalDefaultToolchain = getGlobalDefaultToolchain;
 exports.setDefaultToolchain = setDefaultToolchain;
 exports.getHostTriple = getHostTriple;
 exports.prepareToolchain = prepareToolchain;
@@ -45153,9 +45151,11 @@ async function installComponent(component, toolchain) {
     await exec.exec('rustup', args);
 }
 // Gets the default Rust toolchain or undefined if not set (or command fails)
-async function getDefaultToolchain() {
+async function getGlobalDefaultToolchain() {
     try {
-        const stdoutBuf = (0, child_process_1.execSync)('rustup show active-toolchain').toString();
+        const stdoutBuf = (0, child_process_1.execSync)('rustup show active-toolchain', {
+            cwd: '/',
+        }).toString();
         return stdoutBuf.trim();
     }
     catch (err) {
@@ -45297,7 +45297,10 @@ function spawnAsync(cmd, args = [], opts = {
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DenyWorkflow = exports.ShearWorkflow = exports.DocsWorkflow = exports.FormatWorkflow = exports.ClippyWorkflow = exports.TestWorkflow = void 0;
+exports.workflowConfig = workflowConfig;
+const tslib_1 = __nccwpck_require__(31577);
 const node_console_1 = __nccwpck_require__(37540);
+const string_argv_1 = tslib_1.__importDefault(__nccwpck_require__(30761));
 const cargo_1 = __nccwpck_require__(21253);
 class TestWorkflow {
     config;
@@ -45406,6 +45409,27 @@ function cargoCommand(command, config, args, addProfile) {
         cargoCommand.push(...args);
     }
     return cargoCommand;
+}
+// Helper to build workflow config by merging base config with specific flow config
+function workflowConfig(cfg, flow) {
+    let cacheKey = undefined;
+    // Set to default cache key unless 'no-cache' is specified
+    if (cfg.cacheKey !== 'no-cache') {
+        cacheKey = cfg.cacheKey;
+    }
+    const flowConfig = structuredClone(cfg.flow[flow]);
+    const overrideArgs = typeof flowConfig.overrideArgs === 'string'
+        ? (0, string_argv_1.default)(flowConfig.overrideArgs)
+        : undefined;
+    const finalConfig = {
+        ...flowConfig,
+        project: cfg.project,
+        toolchain: flowConfig.toolchain ?? cfg.toolchain, // Flow-specific toolchain overrides global
+        buildProfile: cfg.profile,
+        cacheKey,
+        overrideArgs,
+    };
+    return finalConfig;
 }
 
 

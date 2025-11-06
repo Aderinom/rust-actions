@@ -3,12 +3,11 @@ import { exec } from '@actions/exec';
 import { warn } from 'node:console';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import parseArgsStringToArgv from 'string-argv';
 import { buildCacheStrategy } from './build-cache.js';
 import { Cargo } from './cargo.js';
 import { Input } from './input.js';
 import {
-  getDefaultToolchain,
+  getGlobalDefaultToolchain,
   prepareToolchain,
   setDefaultToolchain,
 } from './rustup.js';
@@ -19,6 +18,8 @@ import {
   FormatWorkflow,
   ShearWorkflow,
   TestWorkflow,
+  Workflow,
+  workflowConfig,
 } from './workflows.js';
 
 interface RunResult {
@@ -45,8 +46,8 @@ export async function run(cfg: Input): Promise<RunResult> {
   // print rustup show
   await exec('rustup', ['show']);
 
+  // Check for rust-toolchain.toml and override toolchain if necessary
   const tomlChannel = await Cargo.rustToolchainTomlChannel(cfg.project);
-
   if (tomlChannel) {
     info(`Detected rust-toolchain.toml channel: ${tomlChannel}`);
     if (cfg.toolchain) {
@@ -58,24 +59,10 @@ export async function run(cfg: Input): Promise<RunResult> {
     cfg.toolchain = tomlChannel;
   }
 
-  const buildCache = buildCacheStrategy(
-    cfg.project,
-    cfg.buildCacheStrategy,
-    cfg.buildCacheFallbackBranch,
-  );
-
   const cacheKey = cfg.cacheKey === 'no-cache' ? undefined : 'rax-cache';
 
-  // Set default toolchain to stable to allow rustc -vV calls
-  if ((await getDefaultToolchain()) === undefined) {
-    // Doesn't matter since toolchain cache on windows is as fast as fresh install
-    // notice(
-    //   'No default toolchain set, since we require a toolchain to get the host triple, it is set to a used toolchain',
-    // );
-    // notice(
-    //   'This means the used toolchain can not be cached properly. To fix this, set a default toolchain in your environment or rustup.',
-    // );
-
+  // Ensure default toolchain is set to allow rustc -vV calls
+  if ((await getGlobalDefaultToolchain()) === undefined) {
     await setDefaultToolchain(cfg.toolchain || 'stable');
   }
 
@@ -89,48 +76,19 @@ export async function run(cfg: Input): Promise<RunResult> {
   ].filter((wf) => workflowFilter(cfg, wf.name));
 
   // Prepare toolchains
-  const toolchainsToInstall = new Set<string>();
-  if (cfg.toolchain) {
-    toolchainsToInstall.add(cfg.toolchain);
-  }
-  let needDefaultToolchain = false;
-  for (const flow of enabledWorkflows) {
-    if (flow.config.toolchain) {
-      toolchainsToInstall.add(flow.config.toolchain);
-    } else {
-      needDefaultToolchain = true;
-    }
-  }
-  if (needDefaultToolchain && cfg.toolchain) {
-    toolchainsToInstall.add(cfg.toolchain);
-  }
+  const installedToolchains: string[] = await installToolchains(
+    cfg,
+    enabledWorkflows,
+    start,
+    cacheKey,
+  );
 
-  const installedToolchains: string[] = [];
-  // Prepare all required toolchains
-  for (const tc of toolchainsToInstall) {
-    await prepareToolchain(start, tc, cfg.extraComponents, cacheKey);
-    installedToolchains.push(tc);
-  }
-
-  const installedTools: [string, string][] = [];
-  // Installation of required tools for enabled workflows
-  await group(`Installing tools: ${timeSinceStart(start)}`, async () => {
-    for (const wf of enabledWorkflows) {
-      for (const [tool, version] of wf.requiredTools) {
-        await Cargo.install(tool, version, cacheKey);
-        installedTools.push([tool, version]);
-      }
-    }
-
-    if (cfg.installAdditional) {
-      for (const toolSpec of cfg.installAdditional) {
-        // Split toolSpec into tool and version (default to 'latest' if no version specified)
-        const [tool, version] = toolSpec.split('@');
-        await Cargo.install(tool, version || 'latest', cacheKey);
-        installedTools.push([tool, version || 'latest']);
-      }
-    }
-  });
+  const installedTools: [string, string][] = await installTools(
+    start,
+    enabledWorkflows,
+    cacheKey,
+    cfg,
+  );
 
   // If installOnly is set, skip workflow execution
   if (cfg.installOnly) {
@@ -143,14 +101,21 @@ export async function run(cfg: Input): Promise<RunResult> {
     };
   }
 
+  const buildCache = buildCacheStrategy(
+    cfg.project,
+    cfg.buildCacheStrategy,
+    installedToolchains,
+    cfg.buildCacheFallbackBranch,
+  );
+
   if (buildCache) {
     await group(`Restoring build cache: ${timeSinceStart(start)}`, async () => {
       await buildCache.restore();
     });
   }
 
-  const workflowResults: Record<string, true | string> = {};
   // Run workflows
+  const workflowResults: Record<string, true | string> = {};
   let failingWorkflows: string[] = [];
   let allSucceeded = true;
   for (const wf of enabledWorkflows) {
@@ -190,45 +155,63 @@ export async function run(cfg: Input): Promise<RunResult> {
   };
 }
 
-export type FlowConfig<T extends keyof Input['flow']> = Omit<
-  Input['flow'][T],
-  'overrideArgs'
-> & {
-  project: string;
-  cacheKey: string;
-  buildProfile?: string;
-  toolchain?: string;
-  overrideArgs?: string[];
-};
-
-// Helper to build workflow config by merging base config with specific flow config
-export function workflowConfig<T extends keyof Input['flow']>(
+async function installTools(
+  start: number,
+  enabledWorkflows: Workflow[],
+  cacheKey: string | undefined,
   cfg: Input,
-  flow: T,
-): FlowConfig<T> {
-  let cacheKey: String | undefined = undefined;
+) {
+  const installedTools: [string, string][] = [];
+  // Installation of required tools for enabled workflows
+  await group(`Installing tools: ${timeSinceStart(start)}`, async () => {
+    for (const wf of enabledWorkflows) {
+      for (const [tool, version] of wf.requiredTools) {
+        await Cargo.install(tool, version, cacheKey);
+        installedTools.push([tool, version]);
+      }
+    }
 
-  // Set to default cache key unless 'no-cache' is specified
-  if (cfg.cacheKey !== 'no-cache') {
-    cacheKey = cfg.cacheKey;
+    if (cfg.installAdditional) {
+      for (const toolSpec of cfg.installAdditional) {
+        // Split toolSpec into tool and version (default to 'latest' if no version specified)
+        const [tool, version] = toolSpec.split('@');
+        await Cargo.install(tool, version || 'latest', cacheKey);
+        installedTools.push([tool, version || 'latest']);
+      }
+    }
+  });
+  return installedTools;
+}
+
+async function installToolchains(
+  cfg: Input,
+  enabledWorkflows: Workflow[],
+  start: number,
+  cacheKey: string | undefined,
+) {
+  const toolchainsToInstall = new Set<string>();
+  if (cfg.toolchain) {
+    toolchainsToInstall.add(cfg.toolchain);
+  }
+  let needDefaultToolchain = false;
+  for (const flow of enabledWorkflows) {
+    if (flow.config.toolchain) {
+      toolchainsToInstall.add(flow.config.toolchain);
+    } else {
+      needDefaultToolchain = true;
+    }
+  }
+  if (needDefaultToolchain && cfg.toolchain) {
+    toolchainsToInstall.add(cfg.toolchain);
   }
 
-  const flowConfig = structuredClone(cfg.flow[flow]) as any;
-  const overrideArgs =
-    typeof flowConfig.overrideArgs === 'string'
-      ? parseArgsStringToArgv(flowConfig.overrideArgs)
-      : undefined;
-
-  const finalConfig = {
-    ...flowConfig,
-    project: cfg.project,
-    toolchain: flowConfig.toolchain ?? cfg.toolchain, // Flow-specific toolchain overrides global
-    buildProfile: cfg.profile,
-    cacheKey,
-    overrideArgs,
-  };
-
-  return finalConfig;
+  const installedToolchains: string[] = [];
+  // Prepare all required toolchains
+  for (const tc of toolchainsToInstall) {
+    await prepareToolchain(start, tc, cfg.extraComponents, cacheKey);
+    installedToolchains.push(tc);
+  }
+  return installedToolchains;
 }
 
 // Ensures that Cargo's bin directory is in PATH
