@@ -29,7 +29,22 @@ jobs:
       - uses: aderinom/rust-all-action@v1
 ```
 
-For best experience, sccache is recommended.
+To enable artifact caching use
+
+``` yaml
+jobs:
+  rust-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aderinom/rust-all-action@v1
+        with:
+          buildCacheStrategy: 'github'
+          # If no cache is avaiable, tries to fall back to a cahe of this branch
+          buildCacheFallbackBranch: 'main' 
+```
+
+Or with sccache:
 
 ```yaml
 jobs:
@@ -47,7 +62,7 @@ jobs:
       - uses: aderinom/rust-all-action@v1
 ```
 
-If you prefer running seperate jobs, use following config:
+If you prefer running seperate jobs (not really reccomended because of build overhead), use following config:
 
 ```yaml
 jobs:
