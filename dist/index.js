@@ -100242,19 +100242,20 @@ class Cargo {
     }
     // Executes a cargo command with given arguments
     static async exec(args, options) {
+        let env = options?.env || process.env;
         if ((0,external_os_namespaceObject.platform)() === 'win32') {
             // On Windows, we have to use powershell because otherwise env vars are not recignized by cargo
             await spawnAsync('cargo', args, {
                 ...options,
                 shell: 'bash',
                 stdio: 'inherit',
-                env: process.env,
+                env,
             });
         }
         else {
             await exec_exec('cargo', args, {
                 ...options,
-                env: process.env,
+                env: env,
             });
         }
     }
