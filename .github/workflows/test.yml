@@ -4,8 +4,14 @@ on:
   push:
     branches:
       - main
+
+# Only keep the latest run per branch/PR to save CI minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  actions: write
+  actions: read
 
 jobs:
   # Run node tests

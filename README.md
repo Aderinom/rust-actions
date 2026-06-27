@@ -1,7 +1,7 @@
 # Rust All Action
 
 Simple GitHub Action to run multiple Rust workflows.  
-Including: `test`, `clippy`, `fmt`, `doc`, `shear`, `deny`.
+Includes: `test`, `clippy`, `fmt`, `doc`, `shear`, `deny`.
 
 Designed as a baseline CI for Rust projects.
 
@@ -29,7 +29,7 @@ jobs:
       - uses: aderinom/rust-all-action@v1
 ```
 
-To enable artifact caching use
+To enable artifact caching, use:
 
 ```yaml
 jobs:
@@ -40,7 +40,7 @@ jobs:
       - uses: aderinom/rust-all-action@v1
         with:
           buildCacheStrategy: 'github'
-          # If no cache is avaiable, tries to fall back to a cahe of this branch
+          # If no cache is available, tries to fall back to a cache of this branch
           buildCacheFallbackBranch: 'main'
 ```
 
@@ -62,7 +62,7 @@ jobs:
       - uses: aderinom/rust-all-action@v1
 ```
 
-If you prefer running seperate jobs (not really reccomended because of build overhead), use following config:
+If you prefer running separate jobs (not really recommended because of build overhead), use the following config:
 
 ```yaml
 jobs:
@@ -109,7 +109,7 @@ jobs:
 
 ### Custom Workflows
 
-To run additional tools, you can install and cache additional Cargo tools by supplying a comma‑separated list via `installAdditional`.
+To run additional tools, you can install and cache Cargo tools by supplying a comma-separated list via `installAdditional`.
 
 ```yaml
 - uses: aderinom/rust-all-action@v1
@@ -125,8 +125,8 @@ To pre-warm the tool cache, you can optionally have a workflow which installs an
 ```yaml
 - uses: aderinom/rust-all-action@v1
   with:
-    run: 'all-default' # Workflows which's tools will be installed
-    installAdditional: cargo-audit@latest, cargo-sbom #Additional tools to install
+  run: 'all-default' # Workflows whose tools will be installed
+  installAdditional: cargo-audit@latest, cargo-sbom # Additional tools to install
     installOnly: true
 ```
 
@@ -138,7 +138,7 @@ To pre-warm the tool cache, you can optionally have a workflow which installs an
 | `cacheKey`          | Cache key for installed tools. Use `no-cache` to disable. | `rax-cache`   |
 | `run`               | Comma-separated list of workflows to execute.             | `all-default` |
 | `toolchain`         | Default Rust toolchain.                                   | _(none)_      |
-| `installAdditional` | Additional cargo tools to install                         | _(none)_      |
+| `installAdditional` | Additional Cargo tools to install                         | _(none)_      |
 | `installOnly`       | Only installs and caches toolchains and tools             | false         |
 
 ### Workflow Overrides
@@ -149,7 +149,7 @@ Each workflow supports `toolchain` and `overrideArgs` inputs.
 | Workflow | Input                    | Description                   | Example                    |
 | -------- | ------------------------ | ----------------------------- | -------------------------- |
 | `test`   | `flow-test-toolchain`    | Override toolchain for tests. | `nightly`                  |
-|          | `flow-test-overrideArgs` | args for `cargo test`.        | `--all-features --release` |
+|          | `flow-test-overrideArgs` | Args for `cargo test`.        | `--all-features --release` |
 | ...      | ...                      | ...                           | ...                        |
 
 ## Contributing
