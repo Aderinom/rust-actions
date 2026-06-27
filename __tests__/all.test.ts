@@ -1,13 +1,14 @@
 import { which } from '@actions/io';
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { Input, loadInput } from '../src/input.js';
 import { addCargoToPath, run } from '../src/lib.js';
 import { workflowConfig } from '../src/workflows.js';
 
 addCargoToPath();
 
-const project_dir = __dirname + '/test-cargo-repo';
+const project_dir = fileURLToPath(new URL('./test-cargo-repo', import.meta.url));
 describe('Workflows', () => {
   test(`should create correct workflow config`, async () => {
     const options = {

@@ -1,8 +1,8 @@
-import { info, warning } from '@actions/core';
+import { error, info, warning } from '@actions/core';
 import { createHash } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
-import { Cargo } from '../rust/cargo';
-import { deleteCacheEntry, restoreFromCache, saveToCache } from './cache-impl';
+import { Cargo } from '../rust/cargo.js';
+import { deleteCacheEntry, restoreFromCache, saveToCache } from './cache-impl.js';
 
 export interface BuildCacheStrategy {
   restore(): Promise<void>;
@@ -89,8 +89,8 @@ export class GithubBuildCacheStrategy implements BuildCacheStrategy {
     if (this.restoredFrom && currentBranch === this.fallbackBranch) {
       try {
         await deleteCacheEntry(this.cacheKey);
-      } catch (error) {
-        error(`Failed to delete build cache for update`);
+      } catch (e) {
+        error(`Failed to delete build cache for update: ${e}`);
         return;
       }
     }

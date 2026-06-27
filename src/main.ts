@@ -1,6 +1,6 @@
 import { info } from '@actions/core';
-import { loadInput } from './input';
-import { run } from './lib';
+import { loadInput } from './input.js';
+import { run } from './lib.js';
 
 main();
 

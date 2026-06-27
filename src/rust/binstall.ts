@@ -5,8 +5,8 @@ import {
   generateCacheKey,
   restoreFromCache,
   saveToCache,
-} from '../cache/cache-impl';
-import { Cargo } from './cargo';
+} from '../cache/cache-impl.js';
+import { Cargo } from './cargo.js';
 
 // Ensures that cargo-binstall is installed, using caching if specified
 // otherwise installs it directly

@@ -92,6 +92,26 @@ describe('Workflow command construction', () => {
     });
   });
 
+  test('ClippyWorkflow adds --deny warnings when configured', async () => {
+    const calls = stubCargoExec();
+    const wf = new ClippyWorkflow(
+      baseConfig<'clippy'>({ denyWarnings: true }),
+    );
+
+    await wf.run();
+
+    assert.deepEqual(calls[0].args, [
+      'clippy',
+      '--all',
+      '--locked',
+      '--all-targets',
+      '--all-features',
+      `--`,
+      `-D`,
+      'warnings',
+    ]);
+  });
+
   test('FormatWorkflow runs expected fmt check command', async () => {
     const calls = stubCargoExec();
     const wf = new FormatWorkflow(baseConfig<'fmt'>());

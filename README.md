@@ -62,6 +62,22 @@ jobs:
       - uses: aderinom/rust-all-action@v1
 ```
 
+Setting a toolchain for one specific workflow:
+
+```yaml
+jobs:
+  rust-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aderinom/rust-all-action@v1
+        with:
+          buildCacheStrategy: 'github'
+          # If no cache is available, tries to fall back to a cache of this branch
+          buildCacheFallbackBranch: 'main'
+          flow-fmt-toolchain: 'nightly'
+```
+
 If you prefer running separate jobs (not really recommended because of build overhead), use the following config:
 
 ```yaml
@@ -125,32 +141,45 @@ To pre-warm the tool cache, you can optionally have a workflow which installs an
 ```yaml
 - uses: aderinom/rust-all-action@v1
   with:
-  run: 'all-default' # Workflows whose tools will be installed
-  installAdditional: cargo-audit@latest, cargo-sbom # Additional tools to install
+    run: 'all-default' # Workflows whose tools will be installed
+    installAdditional: cargo-audit@latest, cargo-sbom # Additional tools to install
     installOnly: true
 ```
 
+### Tips
+
+The C drive of Windows runners is extremely slow.
+If you are running on windows, consider using [setup dev drive](https://github.com/marketplace/actions/setup-dev-drive) to speed up compilation and caching.
+
 ## Inputs
 
-| Input               | Description                                               | Default       |
-| ------------------- | --------------------------------------------------------- | ------------- |
-| `project`           | Path to Rust project.                                     | `./`          |
-| `cacheKey`          | Cache key for installed tools. Use `no-cache` to disable. | `rax-cache`   |
-| `run`               | Comma-separated list of workflows to execute.             | `all-default` |
-| `toolchain`         | Default Rust toolchain.                                   | _(none)_      |
-| `installAdditional` | Additional Cargo tools to install                         | _(none)_      |
-| `installOnly`       | Only installs and caches toolchains and tools             | false         |
+| Input                      | Description                                                 | Default       |
+| -------------------------- | ----------------------------------------------------------- | ------------- |
+| `project`                  | Path to the Rust project.                                   | `.`           |
+| `profile`                  | Cargo build profile to use.                                 | _(none)_      |
+| `run`                      | Comma-separated list of workflows to execute.               | `all-default` |
+| `cacheKey`                 | Cache key for installed tools. Use `no-cache` to disable.   | `rax-cache`   |
+| `toolchain`                | Default Rust toolchain.                                     | _(none)_      |
+| `extraComponents`          | Additional toolchain components to install e.g. `rust-src`. | _(none)_      |
+| `installAdditional`        | Additional Cargo tools to install.                          | _(none)_      |
+| `installOnly`              | Only installs and caches toolchains and tools.              | `false`       |
+| `buildCacheStrategy`       | `github` to enable build caching through GitHub Cache.      | `none`        |
+| `buildCacheFallbackBranch` | Fallback branch for build cache if the branch has none.     | `main`        |
 
 ### Workflow Overrides
 
-Each workflow supports `toolchain` and `overrideArgs` inputs.
-`clippy` also supports `denyWarnings`.
+Every workflow accepts `toolchain` and `overrideArgs` inputs, named `flow-<workflow>-<input>`,
+where `<workflow>` is one of `test`, `clippy`, `fmt`, `doc`, `shear`, or `deny`.
+Some workflows expose additional inputs.
 
-| Workflow | Input                    | Description                   | Example                    |
-| -------- | ------------------------ | ----------------------------- | -------------------------- |
-| `test`   | `flow-test-toolchain`    | Override toolchain for tests. | `nightly`                  |
-|          | `flow-test-overrideArgs` | Args for `cargo test`.        | `--all-features --release` |
-| ...      | ...                      | ...                           | ...                        |
+| Input                          | Applies to | Description                          | Default  |
+| ------------------------------ | ---------- | ------------------------------------ | -------- |
+| `flow-<workflow>-toolchain`    | all        | Override the Rust toolchain.         | _(none)_ |
+| `flow-<workflow>-overrideArgs` | all        | Replace the default cargo arguments. | _(none)_ |
+| `flow-test-failFast`           | `test`     | Stop tests on the first failure.     | `false`  |
+| `flow-clippy-denyWarnings`     | `clippy`   | Treat clippy warnings as errors.     | `true`   |
+
+Examples: `flow-fmt-toolchain: nightly` or `flow-test-overrideArgs: '--all-features --release'`.
 
 ## Contributing
 
