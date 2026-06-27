@@ -23,7 +23,6 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '24' # Need 24 for testing
           package-manager-cache: false
 
       - name: Install dependencies
@@ -70,7 +69,6 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
           package-manager-cache: false
 
       - name: Run Self as Action
