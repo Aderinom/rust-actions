@@ -30,9 +30,9 @@ function stubCargoExec() {
   return calls;
 }
 
-function baseConfig<T extends 'test' | 'clippy' | 'fmt' | 'doc' | 'shear' | 'deny'>(
-  partial: Partial<FlowConfig<T>> = {},
-): FlowConfig<T> {
+function baseConfig<
+  T extends 'test' | 'clippy' | 'fmt' | 'doc' | 'shear' | 'deny',
+>(partial: Partial<FlowConfig<T>> = {}): FlowConfig<T> {
   return {
     project,
     cacheKey: undefined,
@@ -94,9 +94,7 @@ describe('Workflow command construction', () => {
 
   test('ClippyWorkflow adds --deny warnings when configured', async () => {
     const calls = stubCargoExec();
-    const wf = new ClippyWorkflow(
-      baseConfig<'clippy'>({ denyWarnings: true }),
-    );
+    const wf = new ClippyWorkflow(baseConfig<'clippy'>({ denyWarnings: true }));
 
     await wf.run();
 

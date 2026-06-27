@@ -2,7 +2,11 @@ import { error, info, warning } from '@actions/core';
 import { createHash } from 'crypto';
 import { existsSync, readFileSync } from 'fs';
 import { Cargo } from '../rust/cargo.js';
-import { deleteCacheEntry, restoreFromCache, saveToCache } from './cache-impl.js';
+import {
+  deleteCacheEntry,
+  restoreFromCache,
+  saveToCache,
+} from './cache-impl.js';
 
 export interface BuildCacheStrategy {
   restore(): Promise<void>;

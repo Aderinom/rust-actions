@@ -8,7 +8,9 @@ import { workflowConfig } from '../src/workflows.js';
 
 addCargoToPath();
 
-const project_dir = fileURLToPath(new URL('./test-cargo-repo', import.meta.url));
+const project_dir = fileURLToPath(
+  new URL('./test-cargo-repo', import.meta.url),
+);
 describe('Workflows', () => {
   test(`should create correct workflow config`, async () => {
     const options = {

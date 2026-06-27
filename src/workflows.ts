@@ -40,19 +40,13 @@ export class ClippyWorkflow implements Workflow {
   constructor(readonly config: FlowConfig<'clippy'>) {}
 
   async run(): Promise<void> {
-
     let args = ['--all', '--locked', '--all-targets', '--all-features'];
 
     if (this.config.denyWarnings) {
       args.push('--', '-D', 'warnings');
     }
 
-    const cmd = cargoCommand(
-      'clippy',
-      this.config,
-      args,
-      true,
-    );
+    const cmd = cargoCommand('clippy', this.config, args, true);
     info(
       `Executing command: cargo ${cmd.join(' ')}, in directory: ${this.config.project}`,
     );
