@@ -110,6 +110,11 @@ const definition: Definition = {
         type: 'string',
         description: 'Override arguments for doc workflow',
       },
+      denyWarnings: {
+        type: 'boolean',
+        description: 'Deny warnings in doc workflow',
+        default: 'true',
+      },
     },
     shear: {
       toolchain: {

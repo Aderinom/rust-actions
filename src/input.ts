@@ -51,6 +51,8 @@ export interface Input {
       toolchain?: string;
       //Override arguments for doc workflow
       overrideArgs?: string;
+      //Deny warnings in doc workflow (default: "true")
+      denyWarnings: boolean;
     };
     shear: {
       //Toolchain for shear workflow
@@ -399,6 +401,27 @@ export function loadInput(): Input {
             })() as any);
     } else {
       cfg['flow']['doc']['overrideArgs'] = undefined;
+    }
+  }
+  {
+    let strvalue = core.getInput('flow-doc-denyWarnings');
+    let value = strvalue.length > 0 ? strvalue : undefined;
+    if (value === undefined) {
+      value = 'true';
+    }
+    if (value !== undefined) {
+      cfg['flow']['doc']['denyWarnings'] =
+        value.trim().toLowerCase() === 'true'
+          ? true
+          : value.trim().toLowerCase() === 'false'
+            ? false
+            : ((() => {
+                throw new Error(
+                  'Input "flow-doc-denyWarnings" must be a boolean (true/false)',
+                );
+              })() as any);
+    } else {
+      cfg['flow']['doc']['denyWarnings'] = undefined;
     }
   }
   cfg['flow']['shear'] = {};

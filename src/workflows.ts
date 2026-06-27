@@ -172,7 +172,6 @@ export type FlowConfig<T extends keyof Input['flow']> = Omit<
   buildProfile?: string;
   toolchain?: string;
   overrideArgs?: string[];
-  denyWarnings?: boolean;
 };
 // Helper to build workflow config by merging base config with specific flow config
 export function workflowConfig<T extends keyof Input['flow']>(
