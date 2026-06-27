@@ -98,7 +98,8 @@ export async function deleteCacheEntry(key: string) {
         `Failed to delete cache entry ${key}: ${res.status} ${body}`,
       );
     }
-  } catch (error: any) {
-    core.error(`Error deleting cache entry ${key}: ${error.message}`);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    core.error(`Error deleting cache entry ${key}: ${message}`);
   }
 }
