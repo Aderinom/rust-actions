@@ -12,9 +12,9 @@ import {
   generateCacheKey,
   restoreFromCache,
   saveToCache,
-} from '../cache/cache-impl';
-import { spawnAsync } from '../util';
-import { ensureBinstall } from './binstall';
+} from '../cache/cache-impl.js';
+import { spawnAsync } from '../util.js';
+import { ensureBinstall } from './binstall.js';
 
 export class Cargo {
   /**

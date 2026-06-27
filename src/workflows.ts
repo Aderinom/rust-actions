@@ -1,7 +1,7 @@
 import { info } from 'node:console';
 import parseArgsStringToArgv from 'string-argv';
-import { Input } from './input';
-import { Cargo } from './rust/cargo';
+import { Input } from './input.js';
+import { Cargo } from './rust/cargo.js';
 
 // Definition of a workflow
 export interface Workflow {
@@ -40,12 +40,13 @@ export class ClippyWorkflow implements Workflow {
   constructor(readonly config: FlowConfig<'clippy'>) {}
 
   async run(): Promise<void> {
-    const cmd = cargoCommand(
-      'clippy',
-      this.config,
-      ['--all', '--locked', '--all-targets', '--all-features'],
-      true,
-    );
+    let args = ['--all', '--locked', '--all-targets', '--all-features'];
+
+    if (this.config.denyWarnings) {
+      args.push('--', '-D', 'warnings');
+    }
+
+    const cmd = cargoCommand('clippy', this.config, args, true);
     info(
       `Executing command: cargo ${cmd.join(' ')}, in directory: ${this.config.project}`,
     );

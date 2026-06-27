@@ -4,8 +4,14 @@ on:
   push:
     branches:
       - main
+
+# Only keep the latest run per branch/PR to save CI minutes.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
-  actions: write
+  actions: read
 
 jobs:
   # Run node tests
@@ -17,7 +23,6 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '24' # Need 24 for testing
           package-manager-cache: false
 
       - name: Install dependencies
@@ -31,7 +36,7 @@ jobs:
           git diff --exit-code || (echo "There were changes in the build output - please commit build" && exit 1)
 
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@v1.15.7
+        uses: cargo-bins/cargo-binstall@v1.20.1
       - name: Run Tests
         run: pnpm test
 
@@ -64,7 +69,6 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
-          node-version: '20'
           package-manager-cache: false
 
       - name: Run Self as Action

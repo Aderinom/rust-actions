@@ -1,4 +1,7 @@
+// Automatically generate the input interface and action.yml from the definition object below.
+
 import { writeFileSync } from 'fs';
+
 const actionInfo = {
   title: 'Rust All Action',
   description: `Simple GitHub Action to cache (toolchains and tools) and run multiple Rust workflows.`,

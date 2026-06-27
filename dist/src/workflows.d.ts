@@ -1,4 +1,4 @@
-import { Input } from './input';
+import { Input } from './input.js';
 export interface Workflow {
     readonly name: string;
     readonly run: () => Promise<void>;
