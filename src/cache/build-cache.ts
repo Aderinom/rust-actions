@@ -93,8 +93,9 @@ export class GithubBuildCacheStrategy implements BuildCacheStrategy {
     if (this.restoredFrom && currentBranch === this.fallbackBranch) {
       try {
         await deleteCacheEntry(this.cacheKey);
-      } catch (e) {
-        error(`Failed to delete build cache for update: ${e}`);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        error(`Failed to delete build cache for update: ${msg}`);
         return;
       }
     }
