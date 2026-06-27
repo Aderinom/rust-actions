@@ -53,5 +53,6 @@ export type FlowConfig<T extends keyof Input['flow']> = Omit<Input['flow'][T], '
     buildProfile?: string;
     toolchain?: string;
     overrideArgs?: string[];
+    denyWarnings?: boolean;
 };
 export declare function workflowConfig<T extends keyof Input['flow']>(cfg: Input, flow: T): FlowConfig<T>;

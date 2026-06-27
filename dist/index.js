@@ -46772,7 +46772,12 @@ function loadInput() {
             value = '.';
         }
         if (value !== undefined) {
-            cfg['project'] = value;
+            cfg['project'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "project" must be a non-empty string');
+                    })();
         }
         else {
             cfg['project'] = undefined;
@@ -46782,7 +46787,12 @@ function loadInput() {
         let strvalue = getInput('profile');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['profile'] = value;
+            cfg['profile'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "profile" must be a non-empty string');
+                    })();
         }
         else {
             cfg['profile'] = undefined;
@@ -46795,7 +46805,10 @@ function loadInput() {
             value = 'all-default';
         }
         if (value !== undefined) {
-            cfg['run'] = value.split(',');
+            cfg['run'] = value
+                .split(',')
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
         }
         else {
             cfg['run'] = undefined;
@@ -46808,7 +46821,12 @@ function loadInput() {
             value = 'rax-cache';
         }
         if (value !== undefined) {
-            cfg['cacheKey'] = value;
+            cfg['cacheKey'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "cacheKey" must be a non-empty string');
+                    })();
         }
         else {
             cfg['cacheKey'] = undefined;
@@ -46818,7 +46836,12 @@ function loadInput() {
         let strvalue = getInput('toolchain');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['toolchain'] = value;
+            cfg['toolchain'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "toolchain" must be a non-empty string');
+                    })();
         }
         else {
             cfg['toolchain'] = undefined;
@@ -46828,7 +46851,10 @@ function loadInput() {
         let strvalue = getInput('extraComponents');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['extraComponents'] = value.split(',');
+            cfg['extraComponents'] = value
+                .split(',')
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
         }
         else {
             cfg['extraComponents'] = undefined;
@@ -46838,7 +46864,14 @@ function loadInput() {
         let strvalue = getInput('installOnly');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['installOnly'] = value.toLowerCase() === 'true';
+            cfg['installOnly'] =
+                value.trim().toLowerCase() === 'true'
+                    ? true
+                    : value.trim().toLowerCase() === 'false'
+                        ? false
+                        : (() => {
+                            throw new Error('Input "installOnly" must be a boolean (true/false)');
+                        })();
         }
         else {
             cfg['installOnly'] = undefined;
@@ -46848,7 +46881,10 @@ function loadInput() {
         let strvalue = getInput('installAdditional');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['installAdditional'] = value.split(',');
+            cfg['installAdditional'] = value
+                .split(',')
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
         }
         else {
             cfg['installAdditional'] = undefined;
@@ -46861,7 +46897,12 @@ function loadInput() {
             value = 'none';
         }
         if (value !== undefined) {
-            cfg['buildCacheStrategy'] = value;
+            cfg['buildCacheStrategy'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "buildCacheStrategy" must be a non-empty string');
+                    })();
         }
         else {
             cfg['buildCacheStrategy'] = undefined;
@@ -46874,7 +46915,12 @@ function loadInput() {
             value = 'main';
         }
         if (value !== undefined) {
-            cfg['buildCacheFallbackBranch'] = value;
+            cfg['buildCacheFallbackBranch'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "buildCacheFallbackBranch" must be a non-empty string');
+                    })();
         }
         else {
             cfg['buildCacheFallbackBranch'] = undefined;
@@ -46886,7 +46932,12 @@ function loadInput() {
         let strvalue = getInput('flow-test-toolchain');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['test']['toolchain'] = value;
+            cfg['flow']['test']['toolchain'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-test-toolchain" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['test']['toolchain'] = undefined;
@@ -46896,7 +46947,12 @@ function loadInput() {
         let strvalue = getInput('flow-test-overrideArgs');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['test']['overrideArgs'] = value;
+            cfg['flow']['test']['overrideArgs'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-test-overrideArgs" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['test']['overrideArgs'] = undefined;
@@ -46909,7 +46965,14 @@ function loadInput() {
             value = 'false';
         }
         if (value !== undefined) {
-            cfg['flow']['test']['failFast'] = value.toLowerCase() === 'true';
+            cfg['flow']['test']['failFast'] =
+                value.trim().toLowerCase() === 'true'
+                    ? true
+                    : value.trim().toLowerCase() === 'false'
+                        ? false
+                        : (() => {
+                            throw new Error('Input "flow-test-failFast" must be a boolean (true/false)');
+                        })();
         }
         else {
             cfg['flow']['test']['failFast'] = undefined;
@@ -46920,7 +46983,12 @@ function loadInput() {
         let strvalue = getInput('flow-clippy-toolchain');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['clippy']['toolchain'] = value;
+            cfg['flow']['clippy']['toolchain'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-clippy-toolchain" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['clippy']['toolchain'] = undefined;
@@ -46930,7 +46998,12 @@ function loadInput() {
         let strvalue = getInput('flow-clippy-overrideArgs');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['clippy']['overrideArgs'] = value;
+            cfg['flow']['clippy']['overrideArgs'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-clippy-overrideArgs" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['clippy']['overrideArgs'] = undefined;
@@ -46944,7 +47017,13 @@ function loadInput() {
         }
         if (value !== undefined) {
             cfg['flow']['clippy']['denyWarnings'] =
-                value.toLowerCase() === 'true';
+                value.trim().toLowerCase() === 'true'
+                    ? true
+                    : value.trim().toLowerCase() === 'false'
+                        ? false
+                        : (() => {
+                            throw new Error('Input "flow-clippy-denyWarnings" must be a boolean (true/false)');
+                        })();
         }
         else {
             cfg['flow']['clippy']['denyWarnings'] = undefined;
@@ -46955,7 +47034,12 @@ function loadInput() {
         let strvalue = getInput('flow-fmt-toolchain');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['fmt']['toolchain'] = value;
+            cfg['flow']['fmt']['toolchain'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-fmt-toolchain" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['fmt']['toolchain'] = undefined;
@@ -46965,7 +47049,12 @@ function loadInput() {
         let strvalue = getInput('flow-fmt-overrideArgs');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['fmt']['overrideArgs'] = value;
+            cfg['flow']['fmt']['overrideArgs'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-fmt-overrideArgs" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['fmt']['overrideArgs'] = undefined;
@@ -46976,7 +47065,12 @@ function loadInput() {
         let strvalue = getInput('flow-doc-toolchain');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['doc']['toolchain'] = value;
+            cfg['flow']['doc']['toolchain'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-doc-toolchain" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['doc']['toolchain'] = undefined;
@@ -46986,7 +47080,12 @@ function loadInput() {
         let strvalue = getInput('flow-doc-overrideArgs');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['doc']['overrideArgs'] = value;
+            cfg['flow']['doc']['overrideArgs'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-doc-overrideArgs" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['doc']['overrideArgs'] = undefined;
@@ -46997,7 +47096,12 @@ function loadInput() {
         let strvalue = getInput('flow-shear-toolchain');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['shear']['toolchain'] = value;
+            cfg['flow']['shear']['toolchain'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-shear-toolchain" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['shear']['toolchain'] = undefined;
@@ -47007,7 +47111,12 @@ function loadInput() {
         let strvalue = getInput('flow-shear-overrideArgs');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['shear']['overrideArgs'] = value;
+            cfg['flow']['shear']['overrideArgs'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-shear-overrideArgs" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['shear']['overrideArgs'] = undefined;
@@ -47018,7 +47127,12 @@ function loadInput() {
         let strvalue = getInput('flow-deny-toolchain');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['deny']['toolchain'] = value;
+            cfg['flow']['deny']['toolchain'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-deny-toolchain" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['deny']['toolchain'] = undefined;
@@ -47028,7 +47142,12 @@ function loadInput() {
         let strvalue = getInput('flow-deny-overrideArgs');
         let value = strvalue.length > 0 ? strvalue : undefined;
         if (value !== undefined) {
-            cfg['flow']['deny']['overrideArgs'] = value;
+            cfg['flow']['deny']['overrideArgs'] =
+                value.trim().length > 0
+                    ? value.trim()
+                    : (() => {
+                        throw new Error('Input "flow-deny-overrideArgs" must be a non-empty string');
+                    })();
         }
         else {
             cfg['flow']['deny']['overrideArgs'] = undefined;
@@ -100486,9 +100605,16 @@ class DocsWorkflow {
         this.config = config;
     }
     async run() {
+        let env = { ...process.env };
+        if (this.config.denyWarnings) {
+            env.RUSTDOCFLAGS = '-D warnings';
+        }
         const cmd = cargoCommand('doc', this.config, ['--all', '--locked', '--no-deps'], true);
         (0,external_node_console_.info)(`Executing command: cargo ${cmd.join(' ')}, in directory: ${this.config.project}`);
-        await Cargo.exec(cmd, { cwd: this.config.project });
+        await Cargo.exec(cmd, {
+            env: env,
+            cwd: this.config.project,
+        });
     }
 }
 class ShearWorkflow {
