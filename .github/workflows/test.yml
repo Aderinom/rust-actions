@@ -37,7 +37,7 @@ jobs:
           git diff --exit-code || (echo "There were changes in the build output - please commit build" && exit 1)
 
       - name: Install cargo-binstall
-        uses: cargo-bins/cargo-binstall@v1.15.7
+        uses: cargo-bins/cargo-binstall@v1.20.1
       - name: Run Tests
         run: pnpm test
 
