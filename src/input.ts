@@ -51,6 +51,8 @@ export interface Input {
       toolchain?: string;
       //Override arguments for doc workflow
       overrideArgs?: string;
+      //Deny warnings in doc workflow (default: "true")
+      denyWarnings: boolean;
     };
     shear: {
       //Toolchain for shear workflow
@@ -76,7 +78,12 @@ export function loadInput(): Input {
       value = '.';
     }
     if (value !== undefined) {
-      cfg['project'] = value as any;
+      cfg['project'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error('Input "project" must be a non-empty string');
+            })() as any);
     } else {
       cfg['project'] = undefined;
     }
@@ -85,7 +92,12 @@ export function loadInput(): Input {
     let strvalue = core.getInput('profile');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['profile'] = value as any;
+      cfg['profile'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error('Input "profile" must be a non-empty string');
+            })() as any);
     } else {
       cfg['profile'] = undefined;
     }
@@ -97,7 +109,10 @@ export function loadInput(): Input {
       value = 'all-default';
     }
     if (value !== undefined) {
-      cfg['run'] = value.split(',') as any;
+      cfg['run'] = value
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0) as any;
     } else {
       cfg['run'] = undefined;
     }
@@ -109,7 +124,12 @@ export function loadInput(): Input {
       value = 'rax-cache';
     }
     if (value !== undefined) {
-      cfg['cacheKey'] = value as any;
+      cfg['cacheKey'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error('Input "cacheKey" must be a non-empty string');
+            })() as any);
     } else {
       cfg['cacheKey'] = undefined;
     }
@@ -118,7 +138,12 @@ export function loadInput(): Input {
     let strvalue = core.getInput('toolchain');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['toolchain'] = value as any;
+      cfg['toolchain'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error('Input "toolchain" must be a non-empty string');
+            })() as any);
     } else {
       cfg['toolchain'] = undefined;
     }
@@ -127,7 +152,10 @@ export function loadInput(): Input {
     let strvalue = core.getInput('extraComponents');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['extraComponents'] = value.split(',') as any;
+      cfg['extraComponents'] = value
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0) as any;
     } else {
       cfg['extraComponents'] = undefined;
     }
@@ -136,7 +164,16 @@ export function loadInput(): Input {
     let strvalue = core.getInput('installOnly');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['installOnly'] = value.toLowerCase() === ('true' as any);
+      cfg['installOnly'] =
+        value.trim().toLowerCase() === 'true'
+          ? true
+          : value.trim().toLowerCase() === 'false'
+            ? false
+            : ((() => {
+                throw new Error(
+                  'Input "installOnly" must be a boolean (true/false)',
+                );
+              })() as any);
     } else {
       cfg['installOnly'] = undefined;
     }
@@ -145,7 +182,10 @@ export function loadInput(): Input {
     let strvalue = core.getInput('installAdditional');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['installAdditional'] = value.split(',') as any;
+      cfg['installAdditional'] = value
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s.length > 0) as any;
     } else {
       cfg['installAdditional'] = undefined;
     }
@@ -157,7 +197,14 @@ export function loadInput(): Input {
       value = 'none';
     }
     if (value !== undefined) {
-      cfg['buildCacheStrategy'] = value as any;
+      cfg['buildCacheStrategy'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "buildCacheStrategy" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['buildCacheStrategy'] = undefined;
     }
@@ -169,7 +216,14 @@ export function loadInput(): Input {
       value = 'main';
     }
     if (value !== undefined) {
-      cfg['buildCacheFallbackBranch'] = value as any;
+      cfg['buildCacheFallbackBranch'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "buildCacheFallbackBranch" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['buildCacheFallbackBranch'] = undefined;
     }
@@ -180,7 +234,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-test-toolchain');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['test']['toolchain'] = value as any;
+      cfg['flow']['test']['toolchain'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-test-toolchain" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['test']['toolchain'] = undefined;
     }
@@ -189,7 +250,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-test-overrideArgs');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['test']['overrideArgs'] = value as any;
+      cfg['flow']['test']['overrideArgs'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-test-overrideArgs" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['test']['overrideArgs'] = undefined;
     }
@@ -201,7 +269,16 @@ export function loadInput(): Input {
       value = 'false';
     }
     if (value !== undefined) {
-      cfg['flow']['test']['failFast'] = value.toLowerCase() === ('true' as any);
+      cfg['flow']['test']['failFast'] =
+        value.trim().toLowerCase() === 'true'
+          ? true
+          : value.trim().toLowerCase() === 'false'
+            ? false
+            : ((() => {
+                throw new Error(
+                  'Input "flow-test-failFast" must be a boolean (true/false)',
+                );
+              })() as any);
     } else {
       cfg['flow']['test']['failFast'] = undefined;
     }
@@ -211,7 +288,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-clippy-toolchain');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['clippy']['toolchain'] = value as any;
+      cfg['flow']['clippy']['toolchain'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-clippy-toolchain" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['clippy']['toolchain'] = undefined;
     }
@@ -220,7 +304,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-clippy-overrideArgs');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['clippy']['overrideArgs'] = value as any;
+      cfg['flow']['clippy']['overrideArgs'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-clippy-overrideArgs" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['clippy']['overrideArgs'] = undefined;
     }
@@ -233,7 +324,15 @@ export function loadInput(): Input {
     }
     if (value !== undefined) {
       cfg['flow']['clippy']['denyWarnings'] =
-        value.toLowerCase() === ('true' as any);
+        value.trim().toLowerCase() === 'true'
+          ? true
+          : value.trim().toLowerCase() === 'false'
+            ? false
+            : ((() => {
+                throw new Error(
+                  'Input "flow-clippy-denyWarnings" must be a boolean (true/false)',
+                );
+              })() as any);
     } else {
       cfg['flow']['clippy']['denyWarnings'] = undefined;
     }
@@ -243,7 +342,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-fmt-toolchain');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['fmt']['toolchain'] = value as any;
+      cfg['flow']['fmt']['toolchain'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-fmt-toolchain" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['fmt']['toolchain'] = undefined;
     }
@@ -252,7 +358,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-fmt-overrideArgs');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['fmt']['overrideArgs'] = value as any;
+      cfg['flow']['fmt']['overrideArgs'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-fmt-overrideArgs" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['fmt']['overrideArgs'] = undefined;
     }
@@ -262,7 +375,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-doc-toolchain');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['doc']['toolchain'] = value as any;
+      cfg['flow']['doc']['toolchain'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-doc-toolchain" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['doc']['toolchain'] = undefined;
     }
@@ -271,9 +391,37 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-doc-overrideArgs');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['doc']['overrideArgs'] = value as any;
+      cfg['flow']['doc']['overrideArgs'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-doc-overrideArgs" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['doc']['overrideArgs'] = undefined;
+    }
+  }
+  {
+    let strvalue = core.getInput('flow-doc-denyWarnings');
+    let value = strvalue.length > 0 ? strvalue : undefined;
+    if (value === undefined) {
+      value = 'true';
+    }
+    if (value !== undefined) {
+      cfg['flow']['doc']['denyWarnings'] =
+        value.trim().toLowerCase() === 'true'
+          ? true
+          : value.trim().toLowerCase() === 'false'
+            ? false
+            : ((() => {
+                throw new Error(
+                  'Input "flow-doc-denyWarnings" must be a boolean (true/false)',
+                );
+              })() as any);
+    } else {
+      cfg['flow']['doc']['denyWarnings'] = undefined;
     }
   }
   cfg['flow']['shear'] = {};
@@ -281,7 +429,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-shear-toolchain');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['shear']['toolchain'] = value as any;
+      cfg['flow']['shear']['toolchain'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-shear-toolchain" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['shear']['toolchain'] = undefined;
     }
@@ -290,7 +445,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-shear-overrideArgs');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['shear']['overrideArgs'] = value as any;
+      cfg['flow']['shear']['overrideArgs'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-shear-overrideArgs" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['shear']['overrideArgs'] = undefined;
     }
@@ -300,7 +462,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-deny-toolchain');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['deny']['toolchain'] = value as any;
+      cfg['flow']['deny']['toolchain'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-deny-toolchain" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['deny']['toolchain'] = undefined;
     }
@@ -309,7 +478,14 @@ export function loadInput(): Input {
     let strvalue = core.getInput('flow-deny-overrideArgs');
     let value = strvalue.length > 0 ? strvalue : undefined;
     if (value !== undefined) {
-      cfg['flow']['deny']['overrideArgs'] = value as any;
+      cfg['flow']['deny']['overrideArgs'] =
+        value.trim().length > 0
+          ? value.trim()
+          : ((() => {
+              throw new Error(
+                'Input "flow-deny-overrideArgs" must be a non-empty string',
+              );
+            })() as any);
     } else {
       cfg['flow']['deny']['overrideArgs'] = undefined;
     }

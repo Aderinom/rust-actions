@@ -53,6 +53,9 @@ inputs:
     description: 'Toolchain for doc workflow'
   flow-doc-overrideArgs:
     description: 'Override arguments for doc workflow'
+  flow-doc-denyWarnings:
+    description: 'Deny warnings in doc workflow'
+    default: 'true'
   flow-shear-toolchain:
     description: 'Toolchain for shear workflow'
   flow-shear-overrideArgs:

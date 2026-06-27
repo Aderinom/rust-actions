@@ -110,6 +110,11 @@ const definition: Definition = {
         type: 'string',
         description: 'Override arguments for doc workflow',
       },
+      denyWarnings: {
+        type: 'boolean',
+        description: 'Deny warnings in doc workflow',
+        default: 'true',
+      },
     },
     shear: {
       toolchain: {
@@ -221,11 +226,11 @@ function generateLoadFunction(definition: Definition): string {
       lines.push(`if (value !== undefined) {`);
       let parse;
       if (type === 'string[]') {
-        parse = `value.split(',')`;
+        parse = `value.split(',').map((s) => s.trim()).filter((s) => s.length > 0)`;
       } else if (type === 'boolean') {
-        parse = `value.toLowerCase() === 'true'`;
+        parse = `value.trim().toLowerCase() === 'true' ? true : value.trim().toLowerCase() === 'false' ? false : (() => { throw new Error('Input "${inputName}" must be a boolean (true/false)'); })()`;
       } else {
-        parse = `value`;
+        parse = `value.trim().length > 0 ? value.trim() : (() => { throw new Error('Input "${inputName}" must be a non-empty string'); })()`;
       }
 
       lines.push(`cfg${keyPath} = ${parse} as any;`);

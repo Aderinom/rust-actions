@@ -171,18 +171,20 @@ export class Cargo {
     args: string[],
     options?: Omit<actionexec.ExecOptions, 'stdio'>,
   ): Promise<void> {
+    let env = options?.env || process.env;
+
     if (platform() === 'win32') {
       // On Windows, we have to use powershell because otherwise env vars are not recignized by cargo
       await spawnAsync('cargo', args, {
         ...options,
         shell: 'bash',
         stdio: 'inherit',
-        env: process.env as any,
+        env,
       });
     } else {
       await actionexec.exec('cargo', args, {
         ...options,
-        env: process.env as any,
+        env: env as any,
       });
     }
   }

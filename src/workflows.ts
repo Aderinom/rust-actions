@@ -81,6 +81,12 @@ export class DocsWorkflow implements Workflow {
   constructor(readonly config: FlowConfig<'doc'>) {}
 
   async run(): Promise<void> {
+    let env = { ...process.env };
+
+    if (this.config.denyWarnings) {
+      env.RUSTDOCFLAGS = '-D warnings';
+    }
+
     const cmd = cargoCommand(
       'doc',
       this.config,
@@ -90,7 +96,11 @@ export class DocsWorkflow implements Workflow {
     info(
       `Executing command: cargo ${cmd.join(' ')}, in directory: ${this.config.project}`,
     );
-    await Cargo.exec(cmd, { cwd: this.config.project });
+
+    await Cargo.exec(cmd, {
+      env: env as { [key: string]: string },
+      cwd: this.config.project,
+    });
   }
 }
 

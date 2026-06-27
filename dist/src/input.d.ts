@@ -27,6 +27,7 @@ export interface Input {
         doc: {
             toolchain?: string;
             overrideArgs?: string;
+            denyWarnings: boolean;
         };
         shear: {
             toolchain?: string;
