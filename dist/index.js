@@ -99879,7 +99879,8 @@ async function deleteCacheEntry(key) {
         }
     }
     catch (error) {
-        core_error(`Error deleting cache entry ${key}: ${error.message}`);
+        const message = error instanceof Error ? error.message : String(error);
+        core_error(`Error deleting cache entry ${key}: ${message}`);
     }
 }
 
@@ -99957,7 +99958,13 @@ async function installBinstallLinuxMac() {
 }
 // Installs cargo-binstall on Windows
 async function installBinstallWindows() {
-    (0,external_child_process_namespaceObject.execSync)(`Set-ExecutionPolicy Unrestricted -Scope Process; iex (iwr "https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1").Content`, { shell: 'powershell.exe' });
+    // Notes:
+    // - `-UseBasicParsing` avoids Windows PowerShell's legacy Internet Explorer
+    //   based HTML parser, which throws "Object reference not set to an instance
+    //   of an object." on runners where IE is unavailable/unconfigured.
+    // - Forcing TLS 1.2 prevents handshake failures on older Windows PowerShell
+    //   versions that don't negotiate it by default.
+    (0,external_child_process_namespaceObject.execSync)(`Set-ExecutionPolicy Unrestricted -Scope Process; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iex (iwr -UseBasicParsing "https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1").Content`, { shell: 'powershell.exe' });
 }
 
 ;// CONCATENATED MODULE: ./src/rust/cargo.ts
@@ -100163,7 +100170,8 @@ class GithubBuildCacheStrategy {
                 await deleteCacheEntry(this.cacheKey);
             }
             catch (e) {
-                core_error(`Failed to delete build cache for update: ${e}`);
+                const msg = e instanceof Error ? e.message : String(e);
+                core_error(`Failed to delete build cache for update: ${msg}`);
                 return;
             }
         }

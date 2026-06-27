@@ -55,8 +55,14 @@ async function installBinstallLinuxMac(): Promise<void> {
 
 // Installs cargo-binstall on Windows
 async function installBinstallWindows(): Promise<void> {
+  // Notes:
+  // - `-UseBasicParsing` avoids Windows PowerShell's legacy Internet Explorer
+  //   based HTML parser, which throws "Object reference not set to an instance
+  //   of an object." on runners where IE is unavailable/unconfigured.
+  // - Forcing TLS 1.2 prevents handshake failures on older Windows PowerShell
+  //   versions that don't negotiate it by default.
   execSync(
-    `Set-ExecutionPolicy Unrestricted -Scope Process; iex (iwr "https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1").Content`,
+    `Set-ExecutionPolicy Unrestricted -Scope Process; [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; iex (iwr -UseBasicParsing "https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.ps1").Content`,
     { shell: 'powershell.exe' },
   );
 }
